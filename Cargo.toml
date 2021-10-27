@@ -1,0 +1,12 @@
+[package]
+name = "equation_scale"
+version = "0.1.0"
+authors = ["Sindre Sogge Heggen <sindre.heggen@gmail.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+macroquad = "0.3.7"
+geo = "0.18.0"
+mathrs = "0.0.6"
