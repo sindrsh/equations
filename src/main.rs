@@ -3,7 +3,7 @@ mod boxes;
 
 mod prelude{
 	pub use macroquad::prelude::*;
-	pub use geo::{Point, Coordinate,LineString, Polygon};
+	pub use geo::{Point, Coordinate,LineString, Polygon, Triangle};
 	pub use geo::algorithm::contains::Contains;
 	pub use geo::algorithm::translate::Translate;
 	pub use geo::algorithm::rotate::RotatePoint;
@@ -34,38 +34,44 @@ async fn main() {
 	
 	let mut balance = 0;
 	
-	
 	let mut scale = Scale::new();
-	//let mut one1 = Ones::new();
 	
+	let mut ones_left = OnesButton::new();
 	let mut ones_vec: Vec<Ones> = Vec::new();
-	ones_vec.push(Ones::new(50.0,50.0));
-	ones_vec.push(Ones::new(50.0,200.0)); 
 	
 	loop {
     	clear_background(WHITE);
         
         // <writing mouse position on screen 
     	let (x, y) = mouse_position();
+    	let mouse = Point::new(x, y);
     	let mouse_x_and_y = format!("({}, {})", x, y);
     	draw_text(&mouse_x_and_y, 100.0, 100.0, 20.0, BLACK); 
         draw_text(&balance.to_string(), 400.0, 50.0, 20.0, BLACK); 
         
+        // make buttons
+        ones_left.render();
+        if ones_left.update(mouse) {
+        	ones_vec.push(Ones::new(scale.get_c().x, scale.get_c().y)); 	
+        }
+        
+        
         // Handling the scale
-        scale.render();
         scale.update(balance);
+        scale.render();
+        
         
         // Handling the numbers
         let mut left_boxes = 0;
         for i in 0..ones_vec.len() {
-		    ones_vec[i].render();
-		    if ones_vec[i].contains_mouse(mouse_position()) { 
+		    if ones_vec[i].contains_mouse(mouse) { 
 		    	draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK); 
 		    }
 		    left_boxes += ones_vec[i].update(
-		    	mouse_position(), 
+		    	mouse, 
 		    	scale.get_c(), 
 		    	left_boxes);
+		    ones_vec[i].render();	
         }
         balance = left_boxes;
     	
