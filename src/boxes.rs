@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use crate::RECTANGLE;
-
-const BOX_SIZE: f32 = 15.0;
+use crate::BOX_SIZE;
 
 pub struct Ones {
 	s: f32,
@@ -9,10 +8,11 @@ pub struct Ones {
 	square: LineString<f32>,
 	on_scale_left: bool,
 	active: bool,
+	value: i8,
 }
 
 impl Ones {
-	pub fn new(x: f32, y: f32) -> Self {
+	pub fn new(x: f32, y: f32, value: i8) -> Self {
 		let position = Coordinate{ x: x, y: y };
 		let s = BOX_SIZE;
 		let a = position + Coordinate{ x: -s, y: s };
@@ -26,6 +26,7 @@ impl Ones {
 			square: square,
 			on_scale_left: true,
 			active: false,
+			value: value,
 		}
 	}
 	
@@ -60,7 +61,7 @@ impl Ones {
 	
 	pub fn update(
 		&mut self, 
-		mouse: Point<f32>, 
+		mouse: Point<f32>,
 		c: Coordinate<f32>,
 		boxes: i8,
 		) -> i8 {
@@ -75,10 +76,11 @@ impl Ones {
 				let (x, y) = (self.position.x, self.position.y);
 				self.position = Coordinate { 
 					x: mouse.x(), 
-					y: mouse.y() 
+					y: mouse.y()
 					};
 			}
-		}
+		} else {self.active = false; }
+		
 		if is_mouse_button_down(MouseButton::Left) != true {
 			if c.x < self.position.x 
 			&& self.position.x < c.x + RECTANGLE[0]
@@ -88,7 +90,11 @@ impl Ones {
 			}    
 		}
 		if self.on_scale_left {
-			self.position = c + Coordinate{ x: BOX_SIZE + boxes as f32*(2.0*BOX_SIZE+10.0), y: -BOX_SIZE };
+			self.position = c + Coordinate{ 
+				x: BOX_SIZE 
+					+ (self.value*boxes % 5) as f32*(2.0*BOX_SIZE+10.0),
+				y: -BOX_SIZE - (boxes/5) as f32* 2.0*BOX_SIZE
+			};
 		}
 		if self.on_scale_left == true { return 1; }
 		0
@@ -108,23 +114,24 @@ pub struct OnesButton {
 	triangle_vec2: Vec<Vec2>,
 	triangle: Triangle<f32>,
 	left: bool,
-	color: Color, 
+	alt_color: Color,
+	color: Color,
 }
 
 impl OnesButton {
 
-	pub fn new() -> Self {
-		let pos_square = Coordinate{ x: 50.0, y: 200.0 };
+	pub fn new(x: f32, y: f32, color: Color, value: i8) -> Self {
+		let pos_square = Coordinate{ x: x, y: y };
 		let s = BOX_SIZE;
 		let a = pos_square + Coordinate{ x: 2.0*s, y: 0.0};
 		let b = a + Coordinate{ x: 0.0, y: 2.0*s};
 		let c = b - Coordinate{ x: 2.0*s, y: 0.0}; 
 		let square = LineString(vec![a, b, c, a]);
 		
-		let k = 20.0;
-		let pos_triangle = Coordinate{ x: 90.0, y: 200.0 };
+		let k = 40.0;
+		let pos_triangle = Coordinate{ x: x+50.0, y: y };
 		let d = pos_triangle + Coordinate{ x: 2.0*k, y: 0.0};
-		let e = d + Coordinate{ x: -k, y: -10.0 };
+		let e = d + Coordinate{ x: -k, y: value as f32*0.7*k };
 		let triangle = Triangle(pos_triangle, d, e);
 		let triangle_vec2 = vec![
 			Vec2::new(pos_triangle.x, pos_triangle.y), 
@@ -137,16 +144,17 @@ impl OnesButton {
 			triangle_vec2: triangle_vec2,
 			triangle: triangle,
 			left: true,
-			color: GREEN,
+			alt_color: color,
+			color: color,
 		}
 	}
 	
 	pub fn update(&mut self, mouse: Point<f32>) -> bool {
-		self.color = GREEN;
+		self.alt_color = self.color;
 		if self.triangle.contains(&mouse) {
 			draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK);
 			if is_mouse_button_pressed(MouseButton::Left){
-				self.color = PURPLE;
+				self.alt_color = PURPLE;
 				return true;
 			}
 			false  	
@@ -159,7 +167,7 @@ impl OnesButton {
 			self.triangle_vec2[0],
 			self.triangle_vec2[1],
 			self.triangle_vec2[2],
-			self.color,
+			self.alt_color,
 		);
 	}
 }

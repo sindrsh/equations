@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use crate::WINDOW_WIDTH;
 use crate::RECTANGLE;
+use crate::BOX_SIZE;
 //const SHIFT: Point<f32> = Point::new(-10.0,-10.0);
 
 const SHIFT: [f32; 2] = [60.0, -60.0];
@@ -59,8 +60,18 @@ impl Scale {
 			color: GREEN,
 		}
 	}
-	pub fn get_c(&self) -> Coordinate<f32> {
-		self.left_rectangle[0]
+	pub fn get_c(&self, pos: bool) -> Coordinate<f32> {
+		if pos{
+		return Coordinate { 
+			x: self.left_rectangle[0].x, 
+			y: self.left_rectangle[0].y
+		};
+		}
+		Coordinate { 
+			x: self.left_rectangle[0].x, 
+			y: self.left_rectangle[0].y 
+				+ RECTANGLE[1] + 2.0*BOX_SIZE
+		}
 	}
 	
 	
@@ -112,9 +123,17 @@ impl Scale {
 			let mut v = 1;
 			draw_text(&format!("({})", self.angle), 400.0, 80.0, 20.0, BLACK); 
 			if balance == 0 && self.angle < 0 { 
-				if self.angle == -ANGLE_TOL-1 { self.angle = -ANGLE_TOL; } // adjust scale angle at the left end	
+				if self.angle == -ANGLE_TOL - 1 { 
+					self.angle = -ANGLE_TOL; 
+					} // adjust scale angle at the left end	
 				v = 1; 
 				}
+			if balance == 0 && self.angle > 0 { 
+				if self.angle == ANGLE_TOL + 1 { 
+					self.angle = ANGLE_TOL; 
+					} // adjust scale angle at the left end	
+				v = -1; 
+				}	
 			if balance > 0 { v = -1; }
 			if self.angle.abs() <= ANGLE_TOL {
 				let o  = Point::new(ORIGO[0], ORIGO[1]);
