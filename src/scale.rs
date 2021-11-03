@@ -12,12 +12,12 @@ const ANGLE_TOL: i16 = 250;
 pub const ORIGO: [f32; 2] = [WINDOW_WIDTH as f32/2.0_f32,100.0];
 
 pub struct Scale {
+	scale_vec: [LineString<f32>; 6],
 	left_topline: LineString<f32>,
 	left_vline: LineString<f32>,
 	left_lwire: LineString<f32>,
 	left_rwire: LineString<f32>,
 	left_rectangle: LineString<f32>,
-	left_btm_line: LineString<f32>,
 	right_rectangle: LineString<f32>,
 	angle: i16,
 	color: Color,
@@ -39,23 +39,25 @@ impl Scale {
 		let left_vline = LineString(vec![a, b]);
 		let left_lwire = LineString(vec![b, c]);
 		let left_rwire = LineString(vec![b, d]);
-		let left_btm_line = LineString(vec![
-			c + Coordinate { x: 0.0, y: RECTANGLE[1]/2.0 }, 
-			d + Coordinate { x: 0.0, y: RECTANGLE[1]/2.0 }
-			]);
 		let rectangle_line_string = LineString(vec![c, d, e, f, c]);
-		let rectangle_left = LineString(vec![c, d, e, f, c]);
-		let mut rectangle_right = rectangle_line_string.translate(SHIFT[0], SHIFT[1]); 
-		rectangle_right = rectangle_right.translate(SHIFT_RIGHT, 0.0);
+		let left_rectangle = LineString(vec![c, d, e, f, c]);
+		let mut right_rectangle = rectangle_line_string.translate(SHIFT[0], SHIFT[1]); 
+		right_rectangle = right_rectangle.translate(SHIFT_RIGHT, 0.0);
 		
 		Self {
+			scale_vec: [ left_topline.clone(),
+							left_vline.clone(),
+							left_lwire.clone(),
+							left_rwire.clone(),
+							left_rectangle.clone(),
+							right_rectangle.clone()
+							],
 			left_topline: left_topline,
 			left_vline: left_vline,
 			left_lwire: left_lwire,
 			left_rwire: left_rwire,
-			left_rectangle: rectangle_left,
-			left_btm_line: left_btm_line,
-			right_rectangle: rectangle_right,
+			left_rectangle: left_rectangle,
+			right_rectangle: right_rectangle,
 			angle: 0,		
 			color: GREEN,
 		}
@@ -119,21 +121,9 @@ impl Scale {
 	}
 	
 	pub fn update(&mut self, balance: i8) {
-		if balance != 0 || self.angle != 0 {
+		if balance != 0 {
 			let mut v = 1;
 			draw_text(&format!("({})", self.angle), 400.0, 80.0, 20.0, BLACK); 
-			if balance == 0 && self.angle < 0 { 
-				if self.angle == -ANGLE_TOL - 1 { 
-					self.angle = -ANGLE_TOL; 
-					} // adjust scale angle at the left end	
-				v = 1; 
-				}
-			if balance == 0 && self.angle > 0 { 
-				if self.angle == ANGLE_TOL + 1 { 
-					self.angle = ANGLE_TOL; 
-					} // adjust scale angle at the left end	
-				v = -1; 
-				}	
 			if balance > 0 { v = -1; }
 			if self.angle.abs() <= ANGLE_TOL {
 				let o  = Point::new(ORIGO[0], ORIGO[1]);
@@ -150,6 +140,14 @@ impl Scale {
 				self.left_rwire = self.left_rwire.translate(x, y);
 				self.left_rectangle = self.left_rectangle.translate(x, y);
 			}
+	} else {
+		self.angle = 0;	
+		self.left_topline = self.scale_vec[0].clone();
+		self.left_vline = self.scale_vec[1].clone();
+		self.left_lwire = self.scale_vec[2].clone();
+		self.left_rwire = self.scale_vec[3].clone();
+		self.left_rectangle = self.scale_vec[4].clone();
 	}
+
 	}
 }

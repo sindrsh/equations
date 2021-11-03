@@ -16,6 +16,7 @@ use prelude::*;
 
 const RECTANGLE: [f32; 2] = [500.0, 15.0];
 const BOX_SIZE: f32 = 15.0;
+const XBOX_SIZE: f32 = 20.0;
 
 fn window_conf() -> Conf {
     Conf {
@@ -33,17 +34,22 @@ pub const ORIGO: [f32; 2] = [50.0,50.0];
 #[macroquad::main(window_conf)]
 async fn main() {
 	
+	let xval = 4i8;
 	let mut balance = 0;
 	
 	let mut scale = Scale::new();
 	
 	let btn_dif = 10.0;
 	
+	let mut xbox_left = OnesButton::new(50.0, 1000.0, GRAY, -1);
+	let mut xbox_left_remove = OnesButton::new(50.0, 1000.0+btn_dif, GRAY, 1);
+	
 	let mut ones_left = OnesButton::new(50.0, 600.0, BLUE, -1);
 	let mut ones_left_remove = OnesButton::new(50.0, 600.0+btn_dif, BLUE, 1);
 	let mut neg_ones_left = OnesButton::new(50.0, 800.0, LIME, -1);
 	let mut neg_ones_left_remove = OnesButton::new(50.0, 800.0+btn_dif, LIME, 1);
 	let mut ones_vec: Vec<Ones> = Vec::new();
+	let mut xbox_vec: Vec<Xbox> = Vec::new();
 	let mut neg_ones_vec: Vec<Ones> = Vec::new();
 	
 	loop {
@@ -63,6 +69,8 @@ async fn main() {
         neg_ones_left.render();
         ones_left_remove.render();
         neg_ones_left_remove.render();
+        xbox_left.render();
+        xbox_left_remove.render();
         
         if ones_left.update(mouse) {
         	ones_vec.push(
@@ -75,8 +83,14 @@ async fn main() {
         		Ones::new(scale.get_c(false).x, 
         		scale.get_c(false).y, -1)); 	
         }
+        if xbox_left.update(mouse) {
+        	xbox_vec.push(
+        		Xbox::new(scale.get_c(false).x, 
+        		scale.get_c(false).y, 1)); 	
+        }
         if ones_left_remove.update(mouse) { ones_vec.pop(); }
         if neg_ones_left_remove.update(mouse) { neg_ones_vec.pop(); }
+        if xbox_left_remove.update(mouse) { xbox_vec.pop(); }
         
         // Handling the numbers
         let mut left_boxes = 0;
@@ -103,7 +117,19 @@ async fn main() {
 		    neg_ones_vec[i].render();	
         }
         
-        balance = left_boxes+left_neg_boxes;
+        let mut left_xboxes = 0;
+        for i in 0..xbox_vec.len() {
+		    if xbox_vec[i].contains_mouse(mouse) { 
+		    	draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK); 
+		    }
+		    left_xboxes += xbox_vec[i].update(
+		    	mouse, 
+		    	scale.get_c(true), 
+		    	left_xboxes);
+		    xbox_vec[i].render();	
+        }
+        
+        balance = left_boxes+xval*left_xboxes+left_neg_boxes;
         
     	// Handling the scale
         scale.update(balance);
