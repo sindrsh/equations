@@ -3,8 +3,11 @@ use crate::RECTANGLE;
 use crate::BOX_SIZE;
 use crate::XBOX_SIZE;
 
-pub struct Ones {
+pub struct Box {
+	unknown: bool,
 	s: f32,
+	scale_start: f32,
+	dividend: i8,
 	position: Coordinate<f32>,
 	square: LineString<f32>,
 	on_scale_left: bool,
@@ -12,18 +15,26 @@ pub struct Ones {
 	value: i8,
 }
 
-impl Ones {
-	pub fn new(x: f32, y: f32, value: i8) -> Self {
+impl Box {
+	pub fn new(unknown: bool, scale_start: f32, x: f32, y: f32, value: i8) -> Self {
 		let position = Coordinate{ x: x, y: y };
-		let s = BOX_SIZE;
+		let mut s = 15.0;
+		let mut i = 5;
+		if unknown { 
+			s = 25.0; 
+			i = 3;
+		}
 		let a = position + Coordinate{ x: -s, y: s };
 		let b = a + Coordinate{ x: 2.0*s, y: 0.0};
 		let c = b - Coordinate{ x: 0.0, y: 2.0*s};
 		let d = a - Coordinate{ x: 0.0, y: 2.0*s}; 
 		let square = LineString(vec![a, b, c, d, a]);
 		Self {
+			unknown: unknown,
 			s: s,
+			scale_start: scale_start,
 			position: position,
+			dividend: i,
 			square: square,
 			on_scale_left: true,
 			active: false,
@@ -33,7 +44,7 @@ impl Ones {
 	
 	fn get_square(&self) -> LineString<f32> {
 		let o = self.position;
-		let s = BOX_SIZE;
+		let s = self.s;
 		let a = o + Coordinate{ x: -s, y: s };
 		let b = a + Coordinate{ x: 2.0*s, y: 0.0};
 		let c = b - Coordinate{ x: 0.0, y: 2.0*s};
@@ -51,10 +62,10 @@ impl Ones {
 			BLUE
 		);
 		draw_rectangle_lines(
-			self.position.x-BOX_SIZE, 
-			self.position.y-BOX_SIZE, 
-			2.0*BOX_SIZE, 
-			2.0*BOX_SIZE, 
+			self.position.x-self.s, 
+			self.position.y-self.s, 
+			2.0*self.s, 
+			2.0*self.s, 
 			5.0, 
 			BLACK
 		);	
@@ -85,16 +96,16 @@ impl Ones {
 		if is_mouse_button_down(MouseButton::Left) != true {
 			if c.x < self.position.x 
 			&& self.position.x < c.x + RECTANGLE[0]
-			&& c.y-BOX_SIZE < self.position.y
+			&& c.y-self.s < self.position.y
 			&& self.position.y < c.y {
 				self.on_scale_left = true;
 			}    
 		}
 		if self.on_scale_left {
 			self.position = c + Coordinate{ 
-				x: RECTANGLE[0]/2.+ BOX_SIZE 
-					+ (self.value*boxes % 5) as f32*(2.0*BOX_SIZE+10.0),
-				y: -BOX_SIZE - (boxes/5) as f32* 2.0*BOX_SIZE
+				x: self.scale_start + self.s 
+					+ (self.value*boxes % self.dividend) as f32*(2.0*self.s+10.0),
+				y: -self.s - (boxes/self.dividend) as f32* 2.0*self.s
 			};
 		}
 		if self.on_scale_left == true { return 1; }
@@ -174,116 +185,6 @@ impl OnesButton {
 }
 
 
-//------------------
-pub struct Xbox {
-	s: f32,
-	position: Coordinate<f32>,
-	square: LineString<f32>,
-	on_scale_left: bool,
-	active: bool,
-	value: i8,
-}
 
-impl Xbox {
-	pub fn new(x: f32, y: f32, value: i8) -> Self {
-		let position = Coordinate{ x: x, y: y };
-		let s = XBOX_SIZE;
-		let a = position + Coordinate{ x: -s, y: s };
-		let b = a + Coordinate{ x: 2.0*s, y: 0.0};
-		let c = b - Coordinate{ x: 0.0, y: 2.0*s};
-		let d = a - Coordinate{ x: 0.0, y: 2.0*s}; 
-		let square = LineString(vec![a, b, c, d, a]);
-		Self {
-			s: s,
-			position: position,
-			square: square,
-			on_scale_left: true,
-			active: false,
-			value: value,
-		}
-	}
-	
-	fn get_square(&self) -> LineString<f32> {
-		let o = self.position;
-		let s = XBOX_SIZE;
-		let a = o + Coordinate{ x: -s, y: s };
-		let b = a + Coordinate{ x: 2.0*s, y: 0.0};
-		let c = b - Coordinate{ x: 0.0, y: 2.0*s};
-		let d = a - Coordinate{ x: 0.0, y: 2.0*s}; 
-		LineString(vec![a, b, c, d, a])	
-	}
-	
-	pub fn render(&self){
-		draw_poly(
-			self.position.x,
-			self.position.y,
-			4,
-			2_f32.sqrt()*self.s,
-			45.0,
-			BLUE
-		);
-		draw_text("x", 
-			self.position.x-XBOX_SIZE/2., 
-			self.position.y+XBOX_SIZE/2., 
-			50.0, 
-			BLACK); 
-		draw_rectangle_lines(
-			self.position.x-XBOX_SIZE, 
-			self.position.y-XBOX_SIZE, 
-			2.0*XBOX_SIZE, 
-			2.0*XBOX_SIZE, 
-			5.0, 
-			BLACK
-		);	
-	}
-	
-	pub fn update(
-		&mut self, 
-		mouse: Point<f32>,
-		c: Coordinate<f32>,
-		boxes: i8,
-		) -> i8 {
-		if self.contains_mouse(mouse) {
-			if is_mouse_button_pressed(MouseButton::Left) {
-				self.active= true; 
-				}
-			
-			if is_mouse_button_down(MouseButton::Left) 
-			&& self.active {
-				self.on_scale_left = false;
-				let (x, y) = (self.position.x, self.position.y);
-				self.position = Coordinate { 
-					x: mouse.x(), 
-					y: mouse.y()
-					};
-			}
-		} else {self.active = false; }
-		
-		if is_mouse_button_down(MouseButton::Left) != true {
-			if c.x < self.position.x 
-			&& self.position.x < c.x + RECTANGLE[0]
-			&& c.y-XBOX_SIZE < self.position.y
-			&& self.position.y < c.y {
-				self.on_scale_left = true;
-			}    
-		}
-		if self.on_scale_left {
-			self.position = c + Coordinate{ 
-				x: XBOX_SIZE 
-					+ (self.value*boxes % 3) as f32*(2.0*XBOX_SIZE+10.0),
-				y: -XBOX_SIZE - (boxes/3) as f32* 2.0*XBOX_SIZE
-			};
-		}
-		if self.on_scale_left == true { return 1; }
-		0
-	}
-	pub fn contains_mouse(&self, mouse: Point<f32>) -> bool {
-		let square = Polygon::new(
-				self.get_square(),
-				vec![],
-				);
-		square.contains(&mouse)	
-	}
-}
 
 

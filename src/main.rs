@@ -33,7 +33,7 @@ pub const ORIGO: [f32; 2] = [50.0,50.0];
 
 #[macroquad::main(window_conf)]
 async fn main() {
-	
+	let ones_start = RECTANGLE[0]/2.;
 	let xval = 4i8;
 	let mut balance = 0;
 	
@@ -48,9 +48,9 @@ async fn main() {
 	let mut ones_left_remove = OnesButton::new(50.0, 600.0+btn_dif, BLUE, 1);
 	let mut neg_ones_left = OnesButton::new(50.0, 800.0, LIME, -1);
 	let mut neg_ones_left_remove = OnesButton::new(50.0, 800.0+btn_dif, LIME, 1);
-	let mut ones_vec: Vec<Ones> = Vec::new();
-	let mut xbox_vec: Vec<Xbox> = Vec::new();
-	let mut neg_ones_vec: Vec<Ones> = Vec::new();
+	let mut ones_vec: Vec<Box> = Vec::new();
+	let mut xbox_vec: Vec<Box> = Vec::new();
+	let mut neg_ones_vec: Vec<Box> = Vec::new();
 	
 	loop {
     	clear_background(WHITE);
@@ -74,19 +74,33 @@ async fn main() {
         
         if ones_left.update(mouse) {
         	ones_vec.push(
-        		Ones::new(
+        		Box::new(
+        		false,
+        		ones_start, 
         		scale.get_c(true).x, 
-        		scale.get_c(true).y, 1)); 	
+        		scale.get_c(true).y, 
+        		1)
+        		); 	
         }
         if neg_ones_left.update(mouse) {
         	neg_ones_vec.push(
-        		Ones::new(scale.get_c(false).x, 
-        		scale.get_c(false).y, -1)); 	
+        		Box::new(
+        			false,
+        			ones_start,
+        			scale.get_c(false).x, 
+        			scale.get_c(false).y, 
+        			-1)
+        			); 	
         }
         if xbox_left.update(mouse) {
         	xbox_vec.push(
-        		Xbox::new(scale.get_c(false).x, 
-        		scale.get_c(false).y, 1)); 	
+        		Box::new(
+        			true,
+        			0.,
+        			scale.get_c(false).x, 
+        			scale.get_c(false).y, 
+        			1)
+        			); 	
         }
         if ones_left_remove.update(mouse) { ones_vec.pop(); }
         if neg_ones_left_remove.update(mouse) { neg_ones_vec.pop(); }
