@@ -40,17 +40,33 @@ async fn main() {
 	let mut scale = Scale::new();
 	
 	let btn_dif = 10.0;
+	let btn_x = 50.0;
+	let btn_y = 400.0;
+	let btn_dy = 100.0;
 	
-	let mut xbox_left = OnesButton::new(50.0, 1000.0, GRAY, -1);
-	let mut xbox_left_remove = OnesButton::new(50.0, 1000.0+btn_dif, GRAY, 1);
+	let btn_x_right = 600.0;
+		
+	let mut ones_left = OnesButton::new(btn_x, btn_y, BLUE, -1);
+	let mut ones_left_remove = OnesButton::new(btn_x, btn_y+btn_dif, BLUE, 1);
+	/*
+	let mut neg_ones_left = OnesButton::new(btn_x, btn_y + btn_dy, LIME, -1);
+	let mut neg_ones_left_remove = OnesButton::new(btn_x, btn_y + btn_dy+btn_dif, LIME, 1);
+	let mut xbox_left = OnesButton::new(btn_x, btn_y + 2.0*btn_dy, GRAY, -1);
+	let mut xbox_left_remove = OnesButton::new(btn_x, btn_y + 2.0*btn_dy+btn_dif, GRAY, 1);
+	let mut neg_xbox_left = OnesButton::new(btn_x, btn_y + 3.0*btn_dy, GRAY, -1);
+	let mut neg_xbox_left_remove = OnesButton::new(
+		btn_x, btn_y + 3.0*btn_dy+btn_dif, GRAY, 1);
 	
-	let mut ones_left = OnesButton::new(50.0, 600.0, BLUE, -1);
-	let mut ones_left_remove = OnesButton::new(50.0, 600.0+btn_dif, BLUE, 1);
-	let mut neg_ones_left = OnesButton::new(50.0, 800.0, LIME, -1);
-	let mut neg_ones_left_remove = OnesButton::new(50.0, 800.0+btn_dif, LIME, 1);
+	*/	
+	let mut ones_right = OnesButton::new(btn_x_right, btn_y, BLUE, -1);
+	let mut ones_right_remove = OnesButton::new(btn_x_right, btn_y+btn_dif, BLUE, 1);	
+	
 	let mut ones_vec: Vec<Box> = Vec::new();
-	let mut xbox_vec: Vec<Box> = Vec::new();
-	let mut neg_ones_vec: Vec<Box> = Vec::new();
+	//let mut xbox_vec: Vec<Box> = Vec::new();
+	//let mut neg_ones_vec: Vec<Box> = Vec::new();
+	//let mut neg_xbox_vec: Vec<Box> = Vec::new();
+	
+	let mut ones_right_vec: Vec<Box> = Vec::new();
 	
 	loop {
     	clear_background(WHITE);
@@ -64,31 +80,41 @@ async fn main() {
     	draw_text(&mouse_x_and_y, 100.0, 100.0, 20.0, BLACK); 
         draw_text(&balance.to_string(), 400.0, 50.0, 20.0, BLACK); 
         
-        // make buttons
+        // make left buttons
         ones_left.render();
-        neg_ones_left.render();
         ones_left_remove.render();
+        /*
         neg_ones_left_remove.render();
+        neg_ones_left.render();
         xbox_left.render();
         xbox_left_remove.render();
+        neg_xbox_left.render();
+        neg_xbox_left_remove.render();
+        */
+		// make right buttons        
+        ones_right.render();
+        ones_right_remove.render();
         
         if ones_left.update(mouse) {
         	ones_vec.push(
         		Box::new(
         		false,
+        		true,
+        		true,
         		ones_start, 
-        		scale.get_c(true).x, 
-        		scale.get_c(true).y, 
+        		scale.get_c().x, 
+        		scale.get_c_right().y, 
         		1)
         		); 	
         }
+        /*
         if neg_ones_left.update(mouse) {
         	neg_ones_vec.push(
         		Box::new(
         			false,
         			ones_start,
-        			scale.get_c(false).x, 
-        			scale.get_c(false).y, 
+        			scale.get_c().x, 
+        			scale.get_c().y, 
         			-1)
         			); 	
         }
@@ -97,36 +123,82 @@ async fn main() {
         		Box::new(
         			true,
         			0.,
-        			scale.get_c(false).x, 
-        			scale.get_c(false).y, 
+        			scale.get_c().x, 
+        			scale.get_c().y, 
         			1)
         			); 	
         }
+        
+        if neg_xbox_left.update(mouse) {
+        	neg_xbox_vec.push(
+        		Box::new(
+        			true,
+        			0.,
+        			scale.get_c().x, 
+        			scale.get_c().y, 
+        			-1)
+        			); 	
+        }
+        */
+        if ones_right.update(mouse) {
+        	ones_right_vec.push(
+        		Box::new(
+        		false,
+        		false,
+        		false,
+        		ones_start, 
+        		scale.get_c_right().x, 
+        		scale.get_c_right().y, 
+        		1)
+        		); 	
+        }
+        
         if ones_left_remove.update(mouse) { ones_vec.pop(); }
-        if neg_ones_left_remove.update(mouse) { neg_ones_vec.pop(); }
-        if xbox_left_remove.update(mouse) { xbox_vec.pop(); }
+        //if neg_ones_left_remove.update(mouse) { neg_ones_vec.pop(); }
+        //if xbox_left_remove.update(mouse) { xbox_vec.pop(); }
+        //if neg_xbox_left_remove.update(mouse) { neg_xbox_vec.pop(); }
+        if ones_right_remove.update(mouse) { ones_right_vec.pop(); }
+        
+        
         
         // Handling the numbers
         let mut left_boxes = 0;
+        let mut change_count= 0;
         for i in 0..ones_vec.len() {
 		    if ones_vec[i].contains_mouse(mouse) { 
 		    	draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK); 
 		    }
-		    left_boxes += ones_vec[i].update(
+		    let (cnt, change) = ones_vec[i].update(
 		    	mouse, 
-		    	scale.get_c(true), 
+		    	scale.get_c(),
+		    	scale.get_c_right(),  
 		    	left_boxes);
-		    ones_vec[i].render();	
+		    left_boxes += cnt;
+		    if change{ change_count += 1; }
+		    else { ones_vec[i].render(); }	
         }
-        
+        for i in 0..change_count {
+        	ones_vec.pop();
+        	ones_right_vec.push(
+        		Box::new(
+        		false,
+        		false,
+        		false,
+        		ones_start, 
+        		scale.get_c().x, 
+        		scale.get_c_right().y, 
+        		1)
+        		);  	
+        }
+        /*
         let mut left_neg_boxes = 0;
         for i in 0..neg_ones_vec.len() {
 		    if neg_ones_vec[i].contains_mouse(mouse) { 
 		    	draw_text("INSIDE", 400.0, 600.0, 20.0, BLACK); 
 		    }
-		    left_neg_boxes -= neg_ones_vec[i].update(
+		    left_neg_boxes += neg_ones_vec[i].update(
 		    	mouse, 
-		    	scale.get_c(false), 
+		    	scale.get_c(), 
 		    	left_neg_boxes);
 		    neg_ones_vec[i].render();	
         }
@@ -138,13 +210,54 @@ async fn main() {
 		    }
 		    left_xboxes += xbox_vec[i].update(
 		    	mouse, 
-		    	scale.get_c(true), 
+		    	scale.get_c(), 
 		    	left_xboxes);
 		    xbox_vec[i].render();	
         }
         
-        balance = left_boxes+xval*left_xboxes+left_neg_boxes;
-        
+        let mut left_neg_xboxes = 0;
+        for i in 0..neg_xbox_vec.len() {
+		    if neg_xbox_vec[i].contains_mouse(mouse) { 
+		    	draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK); 
+		    }
+		    left_neg_xboxes += neg_xbox_vec[i].update(
+		    	mouse, 
+		    	scale.get_c(), 
+		    	left_neg_xboxes);
+		    neg_xbox_vec[i].render();	
+        }
+        */
+        let mut right_boxes = 0;
+        let mut change_count= 0;
+        for i in 0..ones_right_vec.len() {
+		    if ones_right_vec[i].contains_mouse(mouse) { 
+		    	draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK); 
+		    }
+		    let (cnt, change) = ones_right_vec[i].update(
+		    	mouse, 
+		    	scale.get_c(),
+		    	scale.get_c_right(),  
+		    	right_boxes);
+		    right_boxes += cnt;
+		    if change{ change_count+= 1 }
+		    else { ones_right_vec[i].render(); }
+        }
+        for i in 0..change_count {
+        	ones_right_vec.pop();
+        	ones_vec.push(
+        		Box::new(
+        		false,
+        		true,
+        		true,
+        		ones_start, 
+        		scale.get_c().x, 
+        		scale.get_c_right().y, 
+        		1)
+        		);  	
+        }
+        //balance = left_boxes+xval*left_xboxes-left_neg_boxes-xval*left_neg_xboxes;
+        balance = left_boxes;
+    	
     	// Handling the scale
         scale.update(balance);
     		

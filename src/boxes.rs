@@ -10,13 +10,15 @@ pub struct Box {
 	dividend: i8,
 	position: Coordinate<f32>,
 	square: LineString<f32>,
+	left: bool,
 	on_scale_left: bool,
+	on_scale_right: bool,
 	active: bool,
 	value: i8,
 }
 
 impl Box {
-	pub fn new(unknown: bool, scale_start: f32, x: f32, y: f32, value: i8) -> Self {
+	pub fn new(unknown: bool, left: bool, on_scale_left: bool, scale_start: f32, x: f32, y: f32, value: i8) -> Self {
 		let position = Coordinate{ x: x, y: y };
 		let mut s = 15.0;
 		let mut i = 5;
@@ -36,7 +38,9 @@ impl Box {
 			position: position,
 			dividend: i,
 			square: square,
-			on_scale_left: true,
+			left: left,
+			on_scale_left: on_scale_left,
+			on_scale_right: on_scale_left != true,
 			active: false,
 			value: value,
 		}
@@ -75,8 +79,10 @@ impl Box {
 		&mut self, 
 		mouse: Point<f32>,
 		c: Coordinate<f32>,
+		c_right: Coordinate<f32>,
 		boxes: i8,
-		) -> i8 {
+		) -> (i8, bool) {
+		let mut change = false;
 		if self.contains_mouse(mouse) {
 			if is_mouse_button_pressed(MouseButton::Left) {
 				self.active= true; 
@@ -85,6 +91,7 @@ impl Box {
 			if is_mouse_button_down(MouseButton::Left) 
 			&& self.active {
 				self.on_scale_left = false;
+				self.on_scale_right = false;
 				let (x, y) = (self.position.x, self.position.y);
 				self.position = Coordinate { 
 					x: mouse.x(), 
@@ -95,21 +102,54 @@ impl Box {
 		
 		if is_mouse_button_down(MouseButton::Left) != true {
 			if c.x < self.position.x 
-			&& self.position.x < c.x + RECTANGLE[0]
-			&& c.y-self.s < self.position.y
-			&& self.position.y < c.y {
-				self.on_scale_left = true;
-			}    
+			&& self.position.x < c.x + RECTANGLE[0] {
+				if self.value == 1
+				&& c.y - RECTANGLE[1]/2.0 - self.s < self.position.y
+				&& self.position.y < c.y {
+					self.on_scale_left = true;
+				}
+				if self.value == -1
+				&& c.y < self.position.y
+				&& self.position.y < c.y + RECTANGLE[1]/2.0 + self.s{
+					self.on_scale_left = true;
+				}
+			}
+			
+			if c_right.x < self.position.x 
+			&& self.position.x < c_right.x + RECTANGLE[0] {
+				if self.value == 1
+				&& c_right.y - RECTANGLE[1]/2.0 - self.s < self.position.y
+				&& self.position.y < c_right.y {
+					self.on_scale_right = true;
+				}
+				if self.value == -1
+				&& c_right.y < self.position.y
+				&& self.position.y < c_right.y + RECTANGLE[1]/2.0 + self.s{
+					self.on_scale_right = true;
+				}
+				
+			}
+			   
 		}
-		if self.on_scale_left {
+		if self.on_scale_left || self.on_scale_right {
+			let mut c = c;
+			if self.on_scale_right { c = c_right; }
 			self.position = c + Coordinate{ 
 				x: self.scale_start + self.s 
-					+ (self.value*boxes % self.dividend) as f32*(2.0*self.s+10.0),
-				y: -self.s - (boxes/self.dividend) as f32* 2.0*self.s
+					+ (boxes % self.dividend) as f32*(2.0*self.s+10.0),
+				y: -(self.s+RECTANGLE[1]/2.0)*self.value as f32 - (boxes/self.dividend) as f32* 2.0*self.s*self.value as f32
 			};
+		if self.on_scale_left == true && self.left == false {
+			change = true;
+			self.left = true;
 		}
-		if self.on_scale_left == true { return 1; }
-		0
+		if self.on_scale_right == true && self.left == true {
+			change = true;
+			self.left = false;
+		}
+		return (1, change)
+		}
+		(0, change)
 	}
 	
 	pub fn contains_mouse(&self, mouse: Point<f32>) -> bool {
