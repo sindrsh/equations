@@ -134,7 +134,7 @@ impl Scale {
 			self.left_rectangle[1].x,
 			self.left_rectangle[1].y + RECTANGLE[1]/2.,
 			RECTANGLE[1],
-			RED,
+			GRAY,
 			);
 		draw_line( 
 			self.right_vline[0].x, 
@@ -166,7 +166,7 @@ impl Scale {
 			self.right_rectangle[1].x,
 			self.right_rectangle[1].y + RECTANGLE[1]/2.,
 			RECTANGLE[1],
-			RED,
+			GRAY,
 			);		
 	}
 	

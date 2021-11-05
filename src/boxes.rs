@@ -15,6 +15,7 @@ pub struct Box {
 	on_scale_right: bool,
 	active: bool,
 	value: i8,
+	color: Color,
 }
 
 impl Box {
@@ -43,6 +44,7 @@ impl Box {
 			on_scale_right: on_scale_left != true,
 			active: false,
 			value: value,
+			color: if value > 0 { BLUE } else { LIME}
 		}
 	}
 	
@@ -67,7 +69,7 @@ impl Box {
 			4,
 			2_f32.sqrt()*self.s,
 			45.0,
-			BLUE
+			self.color
 		);
 		draw_rectangle_lines(
 			self.position.x-self.s, 
@@ -146,18 +148,17 @@ impl Box {
 			};
 		if self.on_scale_left == true && self.left == false {
 			change = true;
-			self.left = true;
 		}
 		if self.on_scale_right == true && self.left == true {
 			change = true;
-			self.left = false;
 		}
 		return (1, change)
 		}
 		if self.on_scale_right == false 
 			&& self.on_scale_left == false
 			&& self.active == false {
-				self.position = self.position + Coordinate { x: 0.0, y: 10.0 };	
+				self.position = self.position 
+					+ Coordinate { x: 0.0, y: 10.0*self.value as f32 };	
 			}
 		(0, change)
 	}
@@ -167,7 +168,7 @@ impl Box {
 		let (x, y) = (mouse.x(), mouse.y());
 		let a = self.get_square()[0];
 		let c = self.get_square()[2];
-		let tol = 100.0;
+		let tol = 500.0;
 		if self.active {
 			if a.x -tol < x && x < c.x + tol && c.y - tol < y && y < a.y + tol { return true; }	
 		}
@@ -184,6 +185,7 @@ pub struct OnesButton {
 	left: bool,
 	alt_color: Color,
 	color: Color,
+	value: i8
 }
 
 impl OnesButton {
@@ -214,6 +216,7 @@ impl OnesButton {
 			left: true,
 			alt_color: color,
 			color: color,
+			value: value
 		}
 	}
 	
@@ -231,12 +234,22 @@ impl OnesButton {
 	}
 	
 	pub fn render(&self) {
+		let a = self.triangle_vec2[0];
+		let b = self.triangle_vec2[1];
+		let c = self.triangle_vec2[2];
 		draw_triangle(
-			self.triangle_vec2[0],
-			self.triangle_vec2[1],
-			self.triangle_vec2[2],
+			a,
+			b,
+			c,
 			self.alt_color,
 		);
+		
+		let dx = -10.0;
+		if self.value == -1 {
+			draw_text("+", a.x+(b.x-a.x)/2.0 + dx, a.y-(a.y-c.y)/2.0 + 12.0, 50.0, BLACK);
+		} else {
+			draw_text("-", a.x+(b.x-a.x)/2.0 + dx, a.y-(a.y-c.y)/2.0 + 8.0, 50.0, BLACK);
+		}
 	}
 }
 
