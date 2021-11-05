@@ -33,7 +33,7 @@ pub const ORIGO: [f32; 2] = [50.0,50.0];
 
 #[macroquad::main(window_conf)]
 async fn main() {
-	let ones_start = RECTANGLE[0]/2.;
+	const ones_start: f32 = RECTANGLE[0]/2.;
 	let xval = 4i8;
 	let mut balance = 0;
 	
@@ -159,37 +159,59 @@ async fn main() {
         //if neg_xbox_left_remove.update(mouse) { neg_xbox_vec.pop(); }
         if ones_right_remove.update(mouse) { ones_right_vec.pop(); }
         
-        
+        fn update_box(
+        	mut box1: Vec<Box>,
+        	mut box2: Vec<Box>, 
+        	c: Coordinate<f32>, 
+        	c_r: Coordinate<f32>,
+        	mouse: Point<f32>
+        	) -> (Vec<Box>, Vec<Box>, i8) {
+        	let mut boxes = 0;
+        	let mut change_index: Option<usize> = None;
+		    let mut out_index: Option<usize> = None;
+		    for i in 0..box1.len() {
+				if box1[i].contains_mouse(mouse) { 
+					draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK); 
+				}
+				let (cnt, change) = box1[i].update(
+					mouse, 
+					c,
+					c_r,  
+					boxes);
+				boxes += cnt;
+				if change{ change_index = Some(i); }
+				else if box1[i].get_y() > 900.0 { out_index = Some(i) }
+				else { box1[i].render(); }	
+		    }
+		    if change_index.is_some() {
+		    	box1.swap_remove(change_index.unwrap());
+		    	box2.push(
+		    		Box::new(
+		    		false,
+		    		false,
+		    		false,
+		    		ones_start, 
+		    		c.x, 
+		    		c.y, 
+		    		1)
+		    		);  	
+		    }
+		    if out_index.is_some() { box1.swap_remove(out_index.unwrap()); }
+		    (box1, box2, boxes)
+        }
         
         // Handling the numbers
         let mut left_boxes = 0;
-        let mut change_count= 0;
-        for i in 0..ones_vec.len() {
-		    if ones_vec[i].contains_mouse(mouse) { 
-		    	draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK); 
-		    }
-		    let (cnt, change) = ones_vec[i].update(
-		    	mouse, 
-		    	scale.get_c(),
-		    	scale.get_c_right(),  
-		    	left_boxes);
-		    left_boxes += cnt;
-		    if change{ change_count += 1; }
-		    else { ones_vec[i].render(); }	
-        }
-        for i in 0..change_count {
-        	ones_vec.pop();
-        	ones_right_vec.push(
-        		Box::new(
-        		false,
-        		false,
-        		false,
-        		ones_start, 
-        		scale.get_c().x, 
-        		scale.get_c_right().y, 
-        		1)
-        		);  	
-        }
+		let (vec1, vec2, i) = update_box(
+							ones_vec,
+							ones_right_vec,
+							scale.get_c(),
+							scale.get_c_right(),
+							mouse	
+						);
+		ones_vec = vec1;
+		ones_right_vec = vec2;
+		left_boxes = i;				        
         /*
         let mut left_neg_boxes = 0;
         for i in 0..neg_ones_vec.len() {
@@ -228,7 +250,7 @@ async fn main() {
         }
         */
         let mut right_boxes = 0;
-        let mut change_count= 0;
+        let mut change_index: Option<usize> = None;
         for i in 0..ones_right_vec.len() {
 		    if ones_right_vec[i].contains_mouse(mouse) { 
 		    	draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK); 
@@ -239,11 +261,11 @@ async fn main() {
 		    	scale.get_c_right(),  
 		    	right_boxes);
 		    right_boxes += cnt;
-		    if change{ change_count+= 1 }
+		    if change{ change_index = Some(i) }
 		    else { ones_right_vec[i].render(); }
         }
-        for i in 0..change_count {
-        	ones_right_vec.pop();
+        if change_index.is_some() {
+        	ones_right_vec.swap_remove(change_index.unwrap());
         	ones_vec.push(
         		Box::new(
         		false,

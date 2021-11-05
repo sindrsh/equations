@@ -46,6 +46,10 @@ impl Box {
 		}
 	}
 	
+	pub fn get_y(&self) -> f32 {
+		self.position.y
+	}
+	
 	fn get_square(&self) -> LineString<f32> {
 		let o = self.position;
 		let s = self.s;
@@ -101,6 +105,7 @@ impl Box {
 		} else {self.active = false; }
 		
 		if is_mouse_button_down(MouseButton::Left) != true {
+			self.active = false;
 			if c.x < self.position.x 
 			&& self.position.x < c.x + RECTANGLE[0] {
 				if self.value == 1
@@ -149,16 +154,27 @@ impl Box {
 		}
 		return (1, change)
 		}
+		if self.on_scale_right == false 
+			&& self.on_scale_left == false
+			&& self.active == false {
+				self.position = self.position + Coordinate { x: 0.0, y: 10.0 };	
+			}
 		(0, change)
 	}
 	
 	pub fn contains_mouse(&self, mouse: Point<f32>) -> bool {
-		let square = Polygon::new(
-				self.get_square(),
-				vec![],
-				);
-		square.contains(&mouse)	
-	}
+		
+		let (x, y) = (mouse.x(), mouse.y());
+		let a = self.get_square()[0];
+		let c = self.get_square()[2];
+		let tol = 100.0;
+		if self.active {
+			if a.x -tol < x && x < c.x + tol && c.y - tol < y && y < a.y + tol { return true; }	
+		}
+		
+		if a.x < x && x < c.x && c.y < y && y < a.y { return true; }
+		false
+		}
 }
 
 pub struct OnesButton {
