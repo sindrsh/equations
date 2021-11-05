@@ -2,6 +2,9 @@ use crate::prelude::*;
 use crate::RECTANGLE;
 use crate::BOX_SIZE;
 use crate::XBOX_SIZE;
+use crate::ONES_COLOR;
+use crate::NEG_ONES_COLOR;
+use crate::XBOX_COLOR;
 
 pub struct Box {
 	unknown: bool,
@@ -21,7 +24,7 @@ pub struct Box {
 impl Box {
 	pub fn new(unknown: bool, left: bool, on_scale_left: bool, scale_start: f32, x: f32, y: f32, value: i8) -> Self {
 		let position = Coordinate{ x: x, y: y };
-		let mut s = 15.0;
+		let mut s = 18.0;
 		let mut i = 5;
 		if unknown { 
 			s = 25.0; 
@@ -44,7 +47,9 @@ impl Box {
 			on_scale_right: on_scale_left != true,
 			active: false,
 			value: value,
-			color: if value > 0 { BLUE } else { LIME}
+			color: if unknown { XBOX_COLOR } 
+				   else if value > 0 { ONES_COLOR } 
+				   else { NEG_ONES_COLOR }
 		}
 	}
 	
@@ -78,7 +83,7 @@ impl Box {
 			2.0*self.s, 
 			5.0, 
 			BLACK
-		);	
+		);		
 	}
 	
 	pub fn update(

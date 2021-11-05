@@ -14,8 +14,11 @@ mod prelude{
 use prelude::*;
 
 const RECTANGLE: [f32; 2] = [500.0, 15.0];
-const BOX_SIZE: f32 = 15.0;
-const XBOX_SIZE: f32 = 20.0;
+const BOX_SIZE: f32 = 22.0;
+const XBOX_SIZE: f32 = 25.0;
+const ONES_COLOR: Color = Color::new(0.0, 0.5, 1.0, 1.0);
+const NEG_ONES_COLOR: Color = Color::new(0.0, 1.0, 1.0, 1.0);
+const XBOX_COLOR: Color = Color::new(0.2, 0.8, 0.2, 1.0);
 
 fn window_conf() -> Conf {
     Conf {
@@ -33,7 +36,7 @@ pub const ORIGO: [f32; 2] = [50.0,50.0];
 #[macroquad::main(window_conf)]
 async fn main() {
 	const Ones_start: f32 = RECTANGLE[0]/2.;
-	let xval = 4i8;
+	let mut xval = 4;
 	let mut balance = 0;
 	
 	let mut scale = Scale::new();
@@ -61,13 +64,14 @@ async fn main() {
 	let mut xbox_right = OnesButton::new(btn_x_right, btn_y + 2.0*btn_dy, GRAY, -1);
 	let mut xbox_right_remove = OnesButton::new(btn_x_right, btn_y + 2.0*btn_dy+btn_dif, GRAY, 1);
 	
+	/* // NEGATIVE XBOXES
 	let mut neg_xbox_left = OnesButton::new(btn_x, btn_y + 3.0*btn_dy, GRAY, -1);
 	let mut neg_xbox_left_remove = OnesButton::new(
 		btn_x, btn_y + 3.0*btn_dy+btn_dif, GRAY, 1);
 	let mut neg_xbox_right = OnesButton::new(btn_x_right, btn_y + 3.0*btn_dy, GRAY, -1);
 	let mut neg_xbox_right_remove = OnesButton::new(
 		btn_x_right, btn_y + 3.0*btn_dy+btn_dif, GRAY, 1);	
-	
+	*/
 	
 	let mut ones_vec: Vec<Box> = Vec::new();
 	let mut ones_right_vec: Vec<Box> = Vec::new();
@@ -78,8 +82,8 @@ async fn main() {
 	let mut xbox_vec: Vec<Box> = Vec::new();
 	let mut xbox_right_vec: Vec<Box> = Vec::new();
 	
-	let mut neg_xbox_left_vec: Vec<Box> = Vec::new();
-	let mut neg_xbox_right_vec: Vec<Box> = Vec::new();	
+	//let mut neg_xbox_left_vec: Vec<Box> = Vec::new();
+	//let mut neg_xbox_right_vec: Vec<Box> = Vec::new();	
 
 	fn update_box(
         	mut box1: Vec<Box>,
@@ -127,8 +131,92 @@ async fn main() {
 		    if out_index.is_some() { box1.swap_remove(out_index.unwrap()); }
 		    (box1, box2, boxes)
         }
+	let mut menu = false;
+	let mut draw_line = false;
 	
 	loop {
+	if menu {
+		clear_background(WHITE);
+		let s = 200.0;
+		let x = 50.0;
+		let y = 50.0;
+		let a = Coordinate { x: x, y: y};
+		let b = a + Coordinate { x: 2.0*s, y: 0.0 };
+		let c = b + Coordinate { x: 0.0, y: s };
+		let d = a + Coordinate { x: 0.0, y: s };
+		let start_ls = LineString(vec![a, b, c, d, a]);
+		
+		let start_poly = Polygon::new(
+    		start_ls,
+    		vec![],
+		);
+		
+		draw_rectangle(x, y, 2.0*s, s, BLUE);
+		draw_text("START", 120.0, 175.0, 100.0, BLACK);
+		
+		let s = 200.0;
+		let x = 50.0;
+		let y = 500.0;
+		let a = Coordinate { x: x, y: y};
+		let b = a + Coordinate { x: 2.0*s, y: 0.0 };
+		let c = b + Coordinate { x: 0.0, y: s };
+		let d = a + Coordinate { x: 0.0, y: s };
+		
+		draw_rectangle(x, y, 2.0*s, s, BLUE);
+		
+		let s = 200.0;
+		let x = 470.0;
+		let y = 500.0;
+		let a = Coordinate { x: x, y: y};
+		let b = a + Coordinate { x: s, y: 0.0 };
+		let c = b + Coordinate { x: 0.0, y: s };
+		let d = a + Coordinate { x: 0.0, y: s };
+		let xbox_val_ls = LineString(vec![a, b, c, d, a]);
+		
+		draw_rectangle(x, y, s, s, BLUE);
+		
+		let xbox_val_poly = Polygon::new(
+    		xbox_val_ls,
+    		vec![],
+		);
+		
+		let (x, y) = mouse_position();
+    	let mouse = Point::new(x, y);
+		
+		if xbox_val_poly.contains(&mouse) && is_mouse_button_pressed(MouseButton::Left) {
+			draw_line = true;
+		}
+		
+		if draw_line{ draw_rectangle_lines(470.0, 500.0, s, s, 10.0, BLACK); }
+		if xbox_val_poly.contains(&mouse) == false 
+			&& is_mouse_button_pressed(MouseButton::Left) { 
+			draw_line = false;
+		}
+		
+		if draw_line {
+			if is_key_pressed(KeyCode::Key0) { xval = 0i8; }
+			if is_key_pressed(KeyCode::Key1) { xval = 1i8; }
+			if is_key_pressed(KeyCode::Key2) { xval = 2i8; }
+			if is_key_pressed(KeyCode::Key3) { xval = 3i8; }
+			if is_key_pressed(KeyCode::Key4) { xval = 4i8; }
+			if is_key_pressed(KeyCode::Key5) { xval = 5i8; }
+			if is_key_pressed(KeyCode::Key6) { xval = 6i8; }
+			if is_key_pressed(KeyCode::Key7) { xval = 7i8; }
+			if is_key_pressed(KeyCode::Key8) { xval = 8i8; }
+			if is_key_pressed(KeyCode::Key9) { xval = 9i8; }
+		}
+		
+		draw_text(&format!("{}", xval), 545.0, 625.0, 100.0, BLACK);
+		draw_text("x-value", 90.0, 625.0, 100.0, BLACK);
+			
+		if start_poly.contains(&mouse) && is_mouse_button_pressed(MouseButton::Left) {
+			menu = false;
+		}
+		
+	}
+	
+	
+	if menu == false {
     	clear_background(WHITE);
     	
     	// Handling the scale
@@ -159,11 +247,13 @@ async fn main() {
         xbox_left_remove.render();
         xbox_right.render();
         xbox_right_remove.render();
-        
+       
+        /*
         neg_xbox_left.render();
         neg_xbox_left_remove.render();
         neg_xbox_right.render();
         neg_xbox_right_remove.render();
+        */
         
 		// make buttons        
         if ones_left.update(mouse) {
@@ -243,7 +333,7 @@ async fn main() {
         			); 	
         }
         
-        
+        /*
         if neg_xbox_left.update(mouse) {
         	neg_xbox_left_vec.push(
         		Box::new(
@@ -269,7 +359,7 @@ async fn main() {
         			-1)
         			); 	
         }
-        
+        */
         if ones_left_remove.update(mouse) { ones_vec.pop(); }
         if ones_right_remove.update(mouse) { ones_right_vec.pop(); }
         
@@ -279,9 +369,10 @@ async fn main() {
         if xbox_left_remove.update(mouse) { xbox_vec.pop(); }
         if xbox_right_remove.update(mouse) { xbox_right_vec.pop(); }
         
+        /*
         if neg_xbox_left_remove.update(mouse) { neg_xbox_left_vec.pop(); }
         if neg_xbox_right_remove.update(mouse) { neg_xbox_right_vec.pop(); }
-        
+        */
         // Handling the numbers
         let mut left_boxes = 0;
 		let (vec1, vec2, i) = update_box(
@@ -379,6 +470,7 @@ async fn main() {
 		xbox_vec = vec2;
 		right_xboxes = i;
 		
+		/*
 		let mut neg_left_xboxes = 0;
         let (vec1, vec2, i) = update_box(
 							neg_xbox_left_vec,
@@ -410,14 +502,29 @@ async fn main() {
 		neg_xbox_right_vec = vec1;
 		neg_xbox_left_vec = vec2;
 		neg_right_xboxes = i;
+		*/
 		
         balance = left_boxes - right_boxes 
         			- neg_left_boxes + neg_right_boxes 
-        			+ left_xboxes - right_xboxes
-        			- neg_left_xboxes + neg_right_xboxes;
+        			+ xval*(left_xboxes - right_xboxes);
+        			//- neg_left_xboxes + neg_right_xboxes;
     	
     	scale.update(balance);
-        //thread::sleep(time::Duration::from_millis(500));
+        
+        draw_rectangle(50.0, 500.0, 2.0*BOX_SIZE, 2.0*BOX_SIZE, BLUE);
+        draw_rectangle_lines(
+			50.0, 
+			500.0, 
+			2.0*BOX_SIZE, 
+			2.0*BOX_SIZE, 
+			5.0, 
+			BLACK
+		);
+        draw_text("1", 62.0, 530.0, 50.0, BLACK);
+        
+        draw_rectangle(54.0, 600.0, 2.0*BOX_SIZE, 2.0*BOX_SIZE, LIME);
+        draw_text("-1", 52.0, 630.0, 50.0, BLACK);
+     }   
         next_frame().await;
     }
 }
