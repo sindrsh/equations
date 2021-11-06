@@ -7,12 +7,10 @@ use crate::NEG_ONES_COLOR;
 use crate::XBOX_COLOR;
 
 pub struct Box {
-	unknown: bool,
 	s: f32,
 	scale_start: f32,
 	dividend: i8,
 	position: Coordinate<f32>,
-	square: LineString<f32>,
 	left: bool,
 	on_scale_left: bool,
 	on_scale_right: bool,
@@ -27,21 +25,15 @@ impl Box {
 		let mut s = 18.0;
 		let mut i = 5;
 		if unknown { 
-			s = 25.0; 
+			s = XBOX_SIZE; 
 			i = 3;
 		}
-		let a = position + Coordinate{ x: -s, y: s };
-		let b = a + Coordinate{ x: 2.0*s, y: 0.0};
-		let c = b - Coordinate{ x: 0.0, y: 2.0*s};
-		let d = a - Coordinate{ x: 0.0, y: 2.0*s}; 
-		let square = LineString(vec![a, b, c, d, a]);
+		
 		Self {
-			unknown: unknown,
 			s: s,
 			scale_start: scale_start,
 			position: position,
 			dividend: i,
-			square: square,
 			left: left,
 			on_scale_left: on_scale_left,
 			on_scale_right: on_scale_left != true,
@@ -103,7 +95,6 @@ impl Box {
 			&& self.active {
 				self.on_scale_left = false;
 				self.on_scale_right = false;
-				let (x, y) = (self.position.x, self.position.y);
 				self.position = Coordinate { 
 					x: mouse.x(), 
 					y: mouse.y()
@@ -184,25 +175,18 @@ impl Box {
 }
 
 pub struct OnesButton {
-	square_ls: LineString<f32>,
 	triangle_vec2: Vec<Vec2>,
 	triangle: Triangle<f32>,
 	left: bool,
 	alt_color: Color,
 	color: Color,
-	value: i8
+	value: i8,
+	ones: TextParams,
 }
 
 impl OnesButton {
 
-	pub fn new(x: f32, y: f32, color: Color, value: i8) -> Self {
-		let pos_square = Coordinate{ x: x, y: y };
-		let s = BOX_SIZE;
-		let a = pos_square + Coordinate{ x: 2.0*s, y: 0.0};
-		let b = a + Coordinate{ x: 0.0, y: 2.0*s};
-		let c = b - Coordinate{ x: 2.0*s, y: 0.0}; 
-		let square = LineString(vec![a, b, c, a]);
-		
+	pub fn new(x: f32, y: f32, color: Color, value: i8, left: bool) -> Self {
 		let k = 40.0;
 		let pos_triangle = Coordinate{ x: x+50.0, y: y };
 		let d = pos_triangle + Coordinate{ x: 2.0*k, y: 0.0};
@@ -214,21 +198,29 @@ impl OnesButton {
 			Vec2::new(e.x, e.y)
 			];
 		 
+		let font = load_ttf_font_from_bytes(include_bytes!("OpenSans.ttf")).unwrap(); 
+		let text_params_ones = TextParams {
+			font: font,
+			font_size: 30,
+			font_scale: 1.0,
+			font_scale_aspect: 1.0,
+			color: BLACK
+		};
+			
 		Self {
-			square_ls: square,
 			triangle_vec2: triangle_vec2,
 			triangle: triangle,
-			left: true,
+			left: left,
 			alt_color: color,
 			color: color,
-			value: value
+			value: value,
+			ones: text_params_ones,
 		}
 	}
 	
 	pub fn update(&mut self, mouse: Point<f32>) -> bool {
 		self.alt_color = self.color;
 		if self.triangle.contains(&mouse) {
-			draw_text("INSIDE", 400.0, 100.0, 20.0, BLACK);
 			if is_mouse_button_pressed(MouseButton::Left){
 				self.alt_color = PURPLE;
 				return true;
@@ -249,12 +241,47 @@ impl OnesButton {
 			self.alt_color,
 		);
 		
-		let dx = -10.0;
+		let mut x = b.x;
+		let mut i = 1.0;
+		if self.left { 
+			x = a.x-2.0*BOX_SIZE; 
+			i = -1.0;
+			}
+		let dx1 = 10.0;
+		let dx2 = -10.0;
+
 		if self.value == -1 {
-			draw_text("+", a.x+(b.x-a.x)/2.0 + dx, a.y-(a.y-c.y)/2.0 + 12.0, 50.0, BLACK);
+			draw_text("+", a.x+(b.x-a.x)/2.0 + dx2, a.y-(a.y-c.y)/2.0 + 12.0, 50.0, BLACK);
+			let (x, y) = (x + i*dx1, a.y - 20.0);
+			draw_rectangle(x, y, 2.0*BOX_SIZE, 2.0*BOX_SIZE, self.color);
+		    draw_rectangle_lines(
+				x, 
+				y, 
+				2.0*BOX_SIZE, 
+				2.0*BOX_SIZE, 
+				5.0, 
+				BLACK
+			);
+			let dx = 15.0;
+			let dy = 32.0;
+			if self.color == ONES_COLOR { 
+				draw_text_ex("1", x + dx, y + dy, self.ones); 
+			}
+			
+			if self.color == NEG_ONES_COLOR { 
+				draw_text_ex("-1", x + dx-8.0, y + dy, self.ones); 
+			}
+			
+			if self.color == XBOX_COLOR { 
+				draw_text_ex("x", x + dx, y + dy, self.ones); 
+			}
+			
 		} else {
-			draw_text("-", a.x+(b.x-a.x)/2.0 + dx, a.y-(a.y-c.y)/2.0 + 8.0, 50.0, BLACK);
+			draw_text("-", a.x+(b.x-a.x)/2.0 + dx2, a.y-(a.y-c.y)/2.0 + 8.0, 50.0, BLACK);
 		}
+		
+        
+		
 	}
 }
 

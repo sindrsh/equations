@@ -1,15 +1,13 @@
 use crate::prelude::*;
 use crate::WINDOW_WIDTH;
 use crate::RECTANGLE;
-use crate::BOX_SIZE;
-//const SHIFT: Point<f32> = Point::new(-10.0,-10.0);
 
-const SHIFT: [f32; 2] = [60.0, -60.0];
-const SHIFT_RIGHT: f32 = 50.0;
 const LINE_THICKNESS: f32 = 8.0;
-const ANGLE_SCALE: f32 = 0.3;
-const ANGLE_TOL: i16 = 50;
-pub const ORIGO: [f32; 2] = [WINDOW_WIDTH as f32/2.0_f32,100.0];
+const ANGLE_SCALE: f32 = 0.5;
+const ANGLE_TOL: i16 = 25;
+pub const ORIGO: [f32; 2] = [WINDOW_WIDTH as f32/2.0_f32,150.0];
+
+const SCALE_COLOR: Color = Color::new(0.7, 0.5, 0.2, 1.0); 
 
 pub struct Scale {
 	scale_vec: [LineString<f32>; 9],
@@ -23,13 +21,12 @@ pub struct Scale {
 	right_rwire: LineString<f32>,
 	right_rectangle: LineString<f32>,
 	angle: i16,
-	color: Color,
 }
 
 impl Scale {
 	pub fn new() -> Self {
 		let topline_x = 500.0;
-		let vline_y = 100.0; 
+		let vline_y = 155.0; 
 		let wire_y = 80.0;
 		let o = Coordinate { x: ORIGO[0], y: ORIGO[1] }; 
 		
@@ -77,7 +74,6 @@ impl Scale {
 			right_rwire: right_rwire,
 			right_rectangle: right_rectangle,
 			angle: 0,		
-			color: GREEN,
 		}
 	}
 	
@@ -95,14 +91,40 @@ impl Scale {
 		}
 	}
 	
-	pub fn render(&self) {
+	fn i_to_string(&self, a: i8, b: i8, x: i8) -> String {
+		
+		let mut text = String::new();
+		if x == 1 {	text.push_str("x"); } 
+		else if x != 0 {	text.push_str(&format!("{}x", x)); }
+		if a != 0 {
+			if x != 0 {	text.push_str(" + "); }
+			text.push_str(&format!("{}", a));
+		}
+		if b != 0 {
+			if a != 0 || x != 0  { text.push_str(" + "); }
+			text.push_str(&format!("(-{})", b));
+		}
+		text		
+	}
+	
+	pub fn render(
+		&self, 
+		balance: i8, 
+		al: i8, 
+		bl: i8, 
+		xl: i8, 
+		ar: i8, 
+		br: i8, 
+		xr: i8,
+		textparams: TextParams
+		) {
 		draw_line( 
 			self.topline[0].x, 
 			self.topline[0].y,
 			self.topline[1].x,
 			self.topline[1].y,
 			LINE_THICKNESS,
-			GREEN,
+			SCALE_COLOR,
 			);
 		draw_line( 
 			self.left_vline[0].x, 
@@ -110,7 +132,7 @@ impl Scale {
 			self.left_vline[1].x,
 			self.left_vline[1].y,
 			LINE_THICKNESS,
-			GREEN,
+			SCALE_COLOR,
 			);
 		draw_line( 
 			self.left_lwire[0].x, 
@@ -118,7 +140,7 @@ impl Scale {
 			self.left_lwire[1].x,
 			self.left_lwire[1].y,
 			LINE_THICKNESS,
-			GREEN,
+			SCALE_COLOR,
 			);
 		draw_line( 
 			self.left_rwire[0].x, 
@@ -126,7 +148,7 @@ impl Scale {
 			self.left_rwire[1].x,
 			self.left_rwire[1].y,
 			LINE_THICKNESS,
-			GREEN,
+			SCALE_COLOR,
 			);						
 		draw_line( 
 			self.left_rectangle[0].x, 
@@ -142,7 +164,7 @@ impl Scale {
 			self.right_vline[1].x,
 			self.right_vline[1].y,
 			LINE_THICKNESS,
-			GREEN,
+			SCALE_COLOR,
 			);
 		draw_line( 
 			self.right_lwire[0].x, 
@@ -150,7 +172,7 @@ impl Scale {
 			self.right_lwire[1].x,
 			self.right_lwire[1].y,
 			LINE_THICKNESS,
-			GREEN,
+			SCALE_COLOR,
 			);
 		draw_line( 
 			self.right_rwire[0].x, 
@@ -158,7 +180,7 @@ impl Scale {
 			self.right_rwire[1].x,
 			self.right_rwire[1].y,
 			LINE_THICKNESS,
-			GREEN,
+			SCALE_COLOR,
 			);						
 		draw_line( 
 			self.right_rectangle[0].x, 
@@ -167,13 +189,45 @@ impl Scale {
 			self.right_rectangle[1].y + RECTANGLE[1]/2.,
 			RECTANGLE[1],
 			GRAY,
-			);		
+			);
+			
+		let mut y = 200.0;	
+		draw_line( 
+			ORIGO[0], 
+			ORIGO[1],
+			ORIGO[0], 
+			ORIGO[1] + y,
+			LINE_THICKNESS,
+			SCALE_COLOR,
+			);
+		
+		let mut left = self.i_to_string(al, bl, xl);	
+		let right = self.i_to_string(ar, br, xr);
+		let mut eq = String::from(" \u{2260} ");
+		if balance == 0 { eq = String::from(" = "); };
+		
+		let dx = left.chars().count() as f32*16.5;
+		left.push_str(&eq);
+		left.push_str(&right);
+		
+		let dy = 60.0;
+		y = ORIGO[1] + y + dy;
+		draw_text_ex(&left, ORIGO[0]-dx-21.0, y, textparams);
+		
+		y = y + 30.0;
+		draw_line( 
+			ORIGO[0], 
+			y,
+			ORIGO[0], 
+			y + 200.0,
+			LINE_THICKNESS,
+			SCALE_COLOR,
+			);	
 	}
 	
 	pub fn update(&mut self, balance: i8) {
 		if balance != 0 {
 			let mut v = 1;
-			draw_text(&format!("({})", self.angle), 400.0, 80.0, 20.0, BLACK); 
 			if balance > 0 { v = -1; }
 			if self.angle == ANGLE_TOL + 1 
 				&& balance > 0	{ 

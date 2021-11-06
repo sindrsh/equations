@@ -7,6 +7,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-macroquad = "0.3.7"
+macroquad = "0.3.10"
 geo = "0.18.0"
 mathrs = "0.0.6"
